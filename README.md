@@ -1,16 +1,24 @@
 # Rust Skills
 
-[](./README-zh.md) | [](./README-ja.md)
+> Maintenance-hardening fork of rust-skills with verified repository assets, routing tests, and CI scaffolding.
 
-> AI-powered Rust development assistant with meta-cognition framework
-
-[![Version](https://img.shields.io/badge/version-2.0.9-green.svg)](https://github.com/ZhangHanDong/rust-skills/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Claude Code](https://img.shields.io/badge/Claude%20Code-Plugin-blue)](https://github.com/anthropics/claude-code)
+[![Version](https://img.shields.io/badge/version-2.0.9-green.svg)](./VERSION)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Fork](https://img.shields.io/badge/fork-chumyin%2Frust--skills-blue.svg)](https://github.com/chumyin/rust-skills)
 
 ## What is Rust Skills?
 
 **Rust Skills** is a Claude Code plugin that transforms how AI assists with Rust development. Instead of giving surface-level answers, it traces through cognitive layers to provide **domain-correct architectural solutions**.
+
+## Fork Note
+
+This repository is a maintenance fork focused on repository integrity:
+
+- installation assets referenced by the README are checked into the repo
+- hook routing is tested against positive and negative prompts
+- validation scripts and CI reflect the current repository layout
+
+Original authorship remains credited to **ZhangHanDong**. This fork tracks its own repository state at `chumyin/rust-skills`.
 
 ### The Problem
 
@@ -62,7 +70,7 @@ Skills now include **inline fallback logic** — when agent files are not availa
 #### Option A: NPX (Easiest)
 
 ```bash
-npx skills add ZhangHanDong/rust-skills
+npx skills add chumyin/rust-skills
 ```
 
 #### Option B: CoWork CLI
@@ -74,7 +82,7 @@ Install via [CoWork](https://crates.io/crates/cowork), a Rust-based skills manag
 cargo install cowork
 
 # Method 1: Direct install
-cowork install ZhangHanDong/rust-skills
+cowork install chumyin/rust-skills
 
 # Method 2: Config-based install (recommended for teams)
 cowork config init                    # Create .cowork/Skills.toml
@@ -89,10 +97,10 @@ cowork config install                 # Install all configured skills
 name = "my-rust-project"
 
 [skills.install]
-rust-skills = "ZhangHanDong/rust-skills"
+rust-skills = "chumyin/rust-skills"
 
 [security]
-trusted_authors = ["ZhangHanDong"]
+trusted_authors = ["ZhangHanDong", "chumyin"]
 ```
 
 > CoWork (`co` for short) provides version management, dependency resolution, lock files, and security auditing. See [CoWork documentation](https://crates.io/crates/cowork) for more details.
@@ -100,7 +108,7 @@ trusted_authors = ["ZhangHanDong"]
 #### Option C: Manual Copy
 
 ```bash
-git clone https://github.com/ZhangHanDong/rust-skills.git
+git clone https://github.com/chumyin/rust-skills.git
 cp -r rust-skills/skills/* ~/.claude/skills/
 ```
 
@@ -114,11 +122,11 @@ For **Claude Code users** who want the complete experience with hooks, backgroun
 
 #### Option A: Marketplace
 
-```bash
-# Step 1: Add the marketplace
-/plugin marketplace add ZhangHanDong/rust-skills
+Marketplace installation depends on the repository being published in a compatible plugin marketplace. This fork does not assume marketplace availability; prefer the local plugin or skills-only flows unless you have published your own marketplace entry.
 
-# Step 2: Install the plugin
+```bash
+# Example only: replace with your published marketplace source
+/plugin marketplace add <owner>/rust-skills
 /plugin install rust-skills@rust-skills
 ```
 
@@ -128,7 +136,7 @@ For **Claude Code users** who want the complete experience with hooks, backgroun
 
 ```bash
 # Clone the repository
-git clone https://github.com/ZhangHanDong/rust-skills.git
+git clone https://github.com/chumyin/rust-skills.git
 
 # Launch with plugin directory
 claude --plugin-dir /path/to/rust-skills
@@ -140,7 +148,7 @@ claude --plugin-dir /path/to/rust-skills
 
 | Feature | Plugin (Marketplace) | Plugin (Local) | Skills-only (NPX/CoWork/Manual) |
 |---------|---------------------|----------------|--------------------------------|
-| All 31 Skills | ✅ | ✅ | ✅ |
+| All 40 Skill Entrypoints | ✅ | ✅ | ✅ |
 | Auto meta-cognition trigger | ✅ | ✅ | ❌ (manual invoke) |
 | Hook-based routing | ✅ | ✅ | ❌ |
 | Background agents | ✅ | ✅ | ✅ (inline fallback) |
@@ -298,7 +306,7 @@ User Question
      ▼
 ┌─────────────────────────────────────────┐
 │           Hook Layer                     │
-│  400+ keywords trigger meta-cognition    │
+│  Rust-targeted matcher triggers routing  │
 └─────────────────────────────────────────┘
      │
      ▼
@@ -321,10 +329,10 @@ Domain-correct architectural solution
 
 ## Documentation
 
-- [Architecture ()](./docs/architecture-zh.md)
-- [Functional Overview ()](./docs/functional-overview-zh.md)
-- [Hook Mechanism ()](./docs/hook-mechanism-zh.md)
-- [Prompt Engineering ()](./docs/prompt-engineering-zh.md)
+- [Introduction](./docs/rust-skills-introduction.md)
+- [Context Optimization](./docs/context-optimization.md)
+- [Forced Eval Hook](./docs/forced-eval-hook.md)
+- [Skills Testing](./docs/skills-testing.md)
 - [Meta-Cognition Example: E0382](./docs/meta-cognition-example-e0382.md)
 
 ## Contributing
@@ -342,5 +350,5 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## Links
 
-- **GitHub**: https://github.com/ZhangHanDong/rust-skills
-- **Issues**: https://github.com/ZhangHanDong/rust-skills/issues
+- **GitHub**: https://github.com/chumyin/rust-skills
+- **Source Lineage**: https://github.com/ZhangHanDong/rust-skills

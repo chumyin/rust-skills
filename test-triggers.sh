@@ -8,7 +8,7 @@
 #   ./test-triggers.sh "query"      # Test single query
 #   ./test-triggers.sh -v "query"   # Single query with verbose
 
-set -e
+set -uo pipefail
 
 echo "=== Rust Skills Forced Eval Hook Tests ==="
 echo
@@ -18,9 +18,11 @@ echo
 # Parse arguments
 VERBOSE=false
 SINGLE_TEST=
+SELF_CHECK=false
 while [[ $# -gt 0 ]]; do
     case $1 in
         -v|--verbose) VERBOSE=true; shift ;;
+        --self-check) SELF_CHECK=true; shift ;;
         *) SINGLE_TEST="$1"; shift ;;
     esac
 done
@@ -35,6 +37,8 @@ NC='\033[0m'
 PASS=0
 FAIL=0
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Cross-platform timeout function
 run_with_timeout() {
     local timeout_sec=$1
@@ -47,6 +51,35 @@ run_with_timeout() {
         # macOS fallback: use perl
         perl -e 'alarm shift @ARGV; exec @ARGV' "$timeout_sec" "$@"
     fi
+}
+
+self_check() {
+    local failed=0
+
+    echo "Running local self-check..."
+
+    if [ -f "$SCRIPT_DIR/hooks/hooks.json" ]; then
+        echo -e "${GREEN}✓${NC} hooks/hooks.json present"
+    else
+        echo -e "${RED}✗${NC} hooks/hooks.json missing"
+        failed=1
+    fi
+
+    if [ -x "$SCRIPT_DIR/.claude/hooks/rust-skill-eval-hook.sh" ]; then
+        echo -e "${GREEN}✓${NC} .claude/hooks/rust-skill-eval-hook.sh executable"
+    else
+        echo -e "${RED}✗${NC} .claude/hooks/rust-skill-eval-hook.sh missing or not executable"
+        failed=1
+    fi
+
+    if python3 "$SCRIPT_DIR/tests/hook-matcher-test.py"; then
+        echo -e "${GREEN}✓${NC} hook matcher tests"
+    else
+        echo -e "${RED}✗${NC} hook matcher tests"
+        failed=1
+    fi
+
+    return "$failed"
 }
 
 # Test function - checks if response contains skill evaluation
@@ -93,10 +126,23 @@ test_hook() {
 echo "--- Testing Hook Activation ---"
 echo
 
+if [ "$SELF_CHECK" = true ]; then
+    self_check
+    exit $?
+fi
+
+if ! command -v claude >/dev/null 2>&1; then
+    echo -e "${YELLOW}claude command not found; skipping live trigger tests${NC}"
+    exit 0
+fi
+
 # If single test specified, run only that
 if [ -n "$SINGLE_TEST" ]; then
     test_hook "$SINGLE_TEST" "any-skill"
 else
+    test_hook "how to use tokio" "tokio"
+    test_hook "E0382 moved value in Rust" "m01-ownership"
+    test_hook "review this unsafe FFI code" "unsafe-checker"
 fi
 
 echo "=== Summary ==="

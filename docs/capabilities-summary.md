@@ -6,12 +6,12 @@
 
 | Metric | Count |
 |--------|-------|
-| Total Skills | 31 |
-| Background Agents | 8 |
-| Slash Commands | 18 |
+| Total Skill Entrypoints | 40 |
+| Background Agents | 11 |
+| Slash Commands | 21 |
 | Unsafe Rules | 47 |
 | Coding Guidelines | 80+ |
-| Trigger Keywords | 400+ |
+| Routing Matcher | Rust-targeted lexical filter |
 
 ---
 
@@ -57,7 +57,7 @@ User Question
     │
     ▼
 ┌─────────────────┐
-│ Hook Triggers   │ ← 400+ keywords (EN/CN/Error codes)
+│ Hook Triggers   │ ← Rust-targeted matcher + compiler errors
 │ (UserPromptSubmit)
 └────────┬────────┘
          │
@@ -90,7 +90,7 @@ User Question
 
 ---
 
-## Skills Inventory (31 Total)
+## Skills Inventory
 
 ### Layer 1: Language Mechanics (7 Skills)
 
@@ -145,7 +145,7 @@ User Question
 
 ---
 
-## Agents (8 Background Researchers)
+## Agents (11 Background Researchers)
 
 | Agent | Data Source | Output |
 |-------|-------------|--------|
@@ -167,7 +167,7 @@ User Question
 
 ---
 
-## Commands (18 Slash Commands)
+## Commands (21 Slash Commands)
 
 ### Query Commands
 
@@ -269,7 +269,7 @@ unsafe {
 
 ## Hook System
 
-### Trigger Keywords (400+)
+### Trigger Keywords
 
 | Category | Examples |
 |----------|----------|
@@ -278,8 +278,8 @@ unsafe {
 | Concurrency | async, await, Send, Sync, thread, spawn |
 | Smart Pointers | Box, Rc, Arc, RefCell, Cell, Mutex |
 | Domains | Web API, HTTP, axum, payment, trading, CLI |
-| Chinese |  |
-| Questions | how to, why, what is |
+| Compiler Signals | E0382, value moved, cannot borrow |
+| Tooling | Cargo.toml, crates.io, docs.rs, clippy |
 
 ### Hook Behavior
 
@@ -356,15 +356,15 @@ Automatically generates crate-specific skills from Cargo.toml dependencies.
 
 ### 4. Background Research Agents
 
-8 specialized agents fetch live data without blocking conversation.
+11 specialized agents fetch live data without blocking conversation.
 
 ### 5. Comprehensive Unsafe Auditing
 
 47 rules covering memory safety, FFI, concurrency, and documentation.
 
-### 6. Bilingual Support
+### 6. Verified Routing Surface
 
-400+ trigger keywords in both English and Chinese.
+The hook matcher is scoped to Rust-targeted prompts and checked against both positive and negative cases.
 
 ---
 

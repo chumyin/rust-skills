@@ -1,5 +1,7 @@
 .DS_Store
 .worktrees/
+__pycache__/
+*.pyc
 
 # Local Claude settings (do not distribute)
 .claude/settings.json

@@ -1,56 +1,63 @@
 #!/usr/bin/env python3
-"
-TDD tests for rust-skills hook matcher
-Run: python3 tests/hook-matcher-test.py
-"
+"""Executable tests for the Rust hook matcher."""
 
-import re
+from __future__ import annotations
+
 import json
+import re
 import sys
 from pathlib import Path
 
-# Load matcher from hooks.json
-hooks_path = Path(__file__).parent.parent / "hooks" / "hooks.json"
-with open(hooks_path) as f:
-    hooks_config = json.load(f)
+ROOT = Path(__file__).resolve().parent.parent
+HOOKS_PATH = ROOT / "hooks" / "hooks.json"
+MATCHER = json.loads(HOOKS_PATH.read_text(encoding="utf-8"))["hooks"]["UserPromptSubmit"][0]["matcher"]
+PATTERN = re.compile(MATCHER)
 
-MATCHER = hooks_config["hooks"]["UserPromptSubmit"][0]["matcher"]
-
-print(f"=== Hook Matcher TDD Tests ===")
-print(f"Matcher loaded from: {hooks_path}\n")
-
-# Test cases: (input, should_match, expected_match_word)
-test_cases = [
-    # Rust - 
-    ("how to use tokio", True, "how to"),
-    ("value moved error", True, "value moved"),
-
-
+POSITIVE_CASES = [
+    ("how to use tokio", "tokio"),
+    ("value moved error", "value moved"),
+    ("E0382 in my trading system", "E0382"),
+    ("Cargo.toml workspace members", "Cargo.toml"),
+    ("Rust web server with axum", "Rust"),
+    ("Need Send Sync trait bounds", "Send"),
 ]
 
-passed = 0
-failed = 0
+NEGATIVE_CASES = [
+    "hello world",
+    "write a haiku",
+    "docker compose bug",
+    "difference between tcp and udp",
+]
 
-for text, should_match, expected_word in test_cases:
-    match = re.search(MATCHER, text)
-    matched = match is not None
 
-    if matched == should_match:
-        passed += 1
-        if matched:
-            print(f"✅ PASS: '{text}' -> matched '{match.group()}'")
+def main() -> int:
+    print("=== Hook Matcher Tests ===")
+    print(f"Matcher loaded from: {HOOKS_PATH}\n")
+
+    failed = 0
+
+    for text, expected in POSITIVE_CASES:
+        match = PATTERN.search(text)
+        if match is None:
+            failed += 1
+            print(f"FAIL: expected Rust prompt to match: {text!r}")
+            continue
+        print(f"PASS: {text!r} -> matched {match.group()!r}")
+        if expected.lower() not in match.group().lower():
+            failed += 1
+            print(f"FAIL: expected match fragment {expected!r}, got {match.group()!r}")
+
+    for text in NEGATIVE_CASES:
+        match = PATTERN.search(text)
+        if match is not None:
+            failed += 1
+            print(f"FAIL: expected non-Rust prompt to miss: {text!r} -> {match.group()!r}")
         else:
-            print(f"✅ PASS: '{text}' -> no match (expected)")
-    else:
-        failed += 1
-        if matched:
-            print(f"❌ FAIL: '{text}' -> matched '{match.group()}' (should NOT match)")
-        else:
-            print(f"❌ FAIL: '{text}' -> no match (should match '{expected_word}')")
+            print(f"PASS: {text!r} -> no match")
 
-print(f"\n=== Summary ===")
-print(f"Passed: {passed}/{len(test_cases)}")
-print(f"Failed: {failed}/{len(test_cases)}")
+    print(f"\nSummary: {len(POSITIVE_CASES) + len(NEGATIVE_CASES) - failed} passed, {failed} failed")
+    return 1 if failed else 0
 
-if failed > 0:
-    sys.exit(1)
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -2,7 +2,7 @@
   "hooks": {
     "UserPromptSubmit": [
       {
-        "matcher": "(?i)(rust|cargo|rustc|crate|Cargo\\.toml|\\.rs\\b|ownership|borrow|lifetime|async|await|trait|generic|unsafe|ffi|error|result|option|tokio|serde|axum|E0\\d{3,4}|value moved|cannot borrow|does not live long enough|mismatched types|not satisfied|Send|Sync|concurrency|||||||||||||||||||||||||best practice|implement|explain|difference|how to|why|what is|.*|.*skill|create.*skill|.*skill|fintech|trading|decimal|currency|||||kubernetes|k8s|docker|grpc|microservice||||web server|HTTP|REST|axum|actix|warp|API|||CLI|command line|clap|terminal|||embedded|no_std|MCU|ARM|RISC-V|firmware||||IoT|sensor|MQTT|||machine learning|ML|tensor|model|inference|||DDD|domain model||performance|benchmark|||RAII|Drop||lifecycle|anti-pattern|||mental model|||compare|vs|versus||)",
+        "matcher": "(?i)(Cargo\\.toml|\\brust\\b|\\bcargo\\b|\\brustc\\b|\\bcrate\\b|\\.rs\\b|\\bownership\\b|\\bborrow(?:ed|ing)?\\b|\\blifetime\\b|\\basync\\b|\\bawait\\b|\\btrait\\b|\\bgeneric\\b|\\bunsafe\\b|\\bffi\\b|\\bresult\\b|\\boption\\b|\\btokio\\b|\\bserde\\b|\\baxum\\b|\\bactix\\b|\\bwarp\\b|\\bclap\\b|\\bno_std\\b|\\bfirmware\\b|\\bmcu\\b|\\bmqtt\\b|\\bclippy\\b|\\bdocs\\.rs\\b|\\bcrates\\.io\\b|\\blib\\.rs\\b|\\bE0\\d{3,4}\\b|value moved|cannot borrow|does not live long enough|mismatched types|not satisfied|\\bSend\\b|\\bSync\\b|\\bDDD\\b|\\bRAII\\b)",
         "hooks": [
           {
             "type": "command",

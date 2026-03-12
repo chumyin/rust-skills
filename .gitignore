@@ -1,4 +1,5 @@
 .DS_Store
+.worktrees/
 
 # Local Claude settings (do not distribute)
 .claude/settings.json

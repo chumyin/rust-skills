@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 from repo_manifest import build_manifest, repo_root
+from render_repository_artifacts import render_capabilities_summary, render_metadata
 
 POSITIVE_MATCH_CASES = [
     "how to use tokio",
@@ -50,6 +51,10 @@ def main() -> int:
 
     metadata_path = root / "metadata.json"
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    expected_metadata = render_metadata(root)
+    if metadata_path.read_text(encoding="utf-8") != expected_metadata:
+        errors.append("metadata.json is out of date; run python3 scripts/render_repository_artifacts.py --write")
+
     if metadata.get("version") != manifest["version"]:
         errors.append(
             f"metadata version {metadata.get('version')} does not match VERSION {manifest['version']}"
@@ -65,6 +70,13 @@ def main() -> int:
         errors.append(
             "metadata fork_repository does not match git remote origin "
             f"({metadata.get('fork_repository')!r} != {manifest['repository']['origin']!r})"
+        )
+
+    capabilities_path = root / "docs" / "capabilities-summary.md"
+    expected_capabilities = render_capabilities_summary(root)
+    if capabilities_path.read_text(encoding="utf-8") != expected_capabilities:
+        errors.append(
+            "docs/capabilities-summary.md is out of date; run python3 scripts/render_repository_artifacts.py --write"
         )
 
     readme_path = root / "README.md"

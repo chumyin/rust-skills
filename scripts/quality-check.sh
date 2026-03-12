@@ -34,6 +34,7 @@ echo
 run_check "python syntax" \
     python3 -m py_compile \
     "$ROOT_DIR/scripts/repo_manifest.py" \
+    "$ROOT_DIR/scripts/render_repository_artifacts.py" \
     "$ROOT_DIR/scripts/validate_repo.py" \
     "$ROOT_DIR/tests/hook-matcher-test.py"
 

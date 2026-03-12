@@ -1,225 +1,98 @@
 # Forced Eval Hook
 
-> Claude Code Skills
+> How rust-skills forces Rust-specific routing before the assistant answers.
 
+## Purpose
 
-### Claude
+The forced evaluation hook exists to prevent a generic assistant from jumping straight to an implementation answer when a Rust question really needs routing first.
 
-> "Claude is so goal focused that it barrels ahead with what it thinks is the best approach. It doesn't check for tools unless explicitly told to."
+The intended sequence is:
 
-Claude **skills**skill description
+1. Detect that the prompt is Rust-related.
+2. Ask the assistant to evaluate relevant skills.
+3. Activate the matching skills.
+4. Answer with the routed context loaded.
 
+This hook is especially important for cases where a surface fix is technically valid but architecturally wrong, such as ownership or concurrency issues inside a domain-specific system.
 
-|------|--------|------|
-| description | **~20%** | Claude |
-| **Forced Eval Hook** | **~84%** |  |
-| LLM Eval Hook | ~80% | API |
+## Repository Assets
 
-## Forced Eval Hook
+The hook implementation in this fork is split across two files:
 
+- `hooks/hooks.json`
+  Defines the Rust-targeted matcher and points to the local hook script.
+- `.claude/hooks/rust-skill-eval-hook.sh`
+  Emits the routing instructions that tell the assistant to evaluate and activate relevant skills before answering.
 
-**** Claude skill
+The repository also includes `.claude/settings.example.json` for related runtime permissions used by browser-backed skills.
 
-- `MANDATORY` -
-- `CRITICAL` -
-- `MUST` -
-- `DO NOT skip` -
+## Current Flow
 
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     User Prompt                              │
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-                      ▼
-┌─────────────────────────────────────────────────────────────┐
-│              UserPromptSubmit Hook                           │
-│                                                              │
-│ 1. Regex matcher │
-│     (?i)(rust|cargo|E0\d{3,4}|...)                          │
-│                                                              │
-│ 2. → hook script │
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-                      ▼
-┌─────────────────────────────────────────────────────────────┐
-│ Hook Script │
-│                                                              │
-│  === MANDATORY SKILL EVALUATION ===                         │
-│                                                              │
-│  CRITICAL: Before proceeding, you MUST:                     │
-│  1. EVALUATE each skill against this prompt                 │
-│  2. State: "[skill-name]: YES/NO - [reason]"                │
-│  3. ACTIVATE matching skills using Skill(name)              │
-│  4. Only THEN proceed with response                         │
-│                                                              │
-│  DO NOT skip this evaluation.                               │
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-                      ▼
-┌─────────────────────────────────────────────────────────────┐
-│ Claude │
-│                                                              │
-│ : Hook + User Prompt │
-│                                                              │
-│ 1. skill │
-│ m01-ownership: YES - E0382 │
-│ m02-resource: NO - │
-│     ...                                                      │
-│ 2. Skill(m01-ownership) │
-│ 3. skill │
-└─────────────────────────────────────────────────────────────┘
+```text
+User prompt
+    ↓
+Rust-targeted matcher in hooks/hooks.json
+    ↓
+Forced evaluation hook script
+    ↓
+Assistant evaluates matching rust-skills
+    ↓
+Assistant activates selected skills
+    ↓
+Assistant answers with routed context
 ```
 
+## Matcher Design
 
-```
-EVALUATE → ACTIVATE → IMPLEMENT
-```
+The matcher in this fork is intentionally narrow.
 
-1. **EVALUATE**: skill YES/NO
-2. **ACTIVATE**: `Skill(skill-name)` skills
-3. **IMPLEMENT**:
+It looks for Rust-specific signals such as:
 
+- Rust tooling: `Cargo.toml`, `cargo`, `rustc`, `docs.rs`, `crates.io`
+- Compiler signals: `E0xxx`, `value moved`, `cannot borrow`
+- Core concepts: `ownership`, `lifetime`, `unsafe`, `Send`, `Sync`
+- Common ecosystem cues: `tokio`, `serde`, `axum`, `clippy`
 
-### 1. Hook (settings.json)
+It intentionally does **not** use catch-all fragments like `.*`. Earlier versions effectively matched arbitrary prompts, which made the hook fire outside Rust scope and reduced trust in the routing layer.
 
-```json
-{
-  "hooks": {
-    "UserPromptSubmit": [
-      {
-        "matcher": "(?i)(rust|cargo|crate|E0\\d{3,4}|...)",
-        "command": ".claude/hooks/rust-skill-eval-hook.sh"
-      }
-    ]
-  }
-}
-```
+## Hook Script Contract
 
-- `UserPromptSubmit`: prompt
-- `matcher`: hook
-- `command`:
+The hook script should stay simple and stable:
 
-### 2. Hook Script
+- tell the assistant to evaluate relevant Rust skills
+- require YES/NO reasoning per skill
+- require activation before answering
+- avoid duplicating the entire routing table already maintained by the skill files
 
-```bash
-#!/bin/bash
-cat << 'EOF'
+The script in this fork is written to be short, legible, and easy to validate in CI.
 
-=== MANDATORY SKILL EVALUATION ===
+## Validation
 
-CRITICAL: Before proceeding with this Rust-related request, you MUST:
+This fork validates the hook in three layers:
 
-1. EVALUATE each available rust-skill against this prompt:
+1. `tests/hook-matcher-test.py`
+   Checks positive and negative matcher cases.
+2. `test-triggers.sh --self-check`
+   Verifies that the matcher file and hook script are present and executable.
+3. `python3 scripts/validate_repo.py`
+   Fails if the hook assets are missing or the matcher drifts out of the validated shape.
 
-   OWNERSHIP & MEMORY:
-   - m01-ownership: ownership, borrow, lifetime, E0382, E0597
-   - m02-resource: Box, Rc, Arc, RefCell, smart pointer
-   ...
+These checks run locally and in GitHub Actions CI.
 
-2. For EACH potentially relevant skill, state: "[skill-name]: YES/NO - [brief reason]"
+## Operational Notes
 
-3. ACTIVATE all YES skills using: Skill(skill-name)
+- Plugin-style installs can use the repository-local hook asset directly.
+- Skills-only installs do not automatically enable hook-based routing.
+- The hook is only one layer of control; the `rust-guru` router and the skill descriptions still carry the main routing logic.
 
-4. Only THEN proceed with your response
+## Maintenance Guidance
 
-DO NOT skip this evaluation.
-DO NOT proceed without activating relevant skills first.
-This is MANDATORY for all Rust-related requests.
+If the matcher changes, update the tests in `tests/hook-matcher-test.py` in the same change.
 
-===================================
+If the hook script wording changes, keep the message focused on:
 
-EOF
-```
+- evaluate
+- activate
+- answer
 
-
-1. ****: MANDATORY, CRITICAL, MUST, DO NOT
-2. **skills **: Claude
-3. ****: YES/NO
-
-### 3. Matcher
-
-```regex
-(?i)(rust|cargo|crate|ownership|borrow|lifetime|async|await|
-trait|generic|unsafe|ffi|error|result|option|tokio|serde|axum|
-.*|.*skill|create.*skill|.*skill)
-```
-
-- crate
-
-
-Hook Claude
-
-
-skills Claude
-
-
-"YES/NO - reason" Claude
-
-
-"Only THEN proceed" Claude
-
-
-|------|------|
-| token | Hook token |
-| Regex |  |
-
-
-### A: description
-
-```yaml
-# SKILL.md
-description: "Keywords: ownership, borrow, lifetime..."
-```
-
-****: Claude skill descriptions
-
-### B: Hook
-
-```
-You might want to check available skills before responding.
-```
-
-****: "might want" Claude
-
-### C: Forced Eval Hook ()
-
-```
-CRITICAL: You MUST evaluate each skill. DO NOT skip.
-```
-
-
-### D: LLM Eval Hook
-
-LLM skills
-
-****: API
-
-
-### 1. Hook
-
-```
-✅ MUST, CRITICAL, MANDATORY, DO NOT skip
-❌ should, might, consider, optionally
-```
-
-### 2. Skill
-
-```
-✅ - skill-name: keyword1, keyword2, keyword3
-❌ skill-name ()
-```
-
-### 3. Matcher
-
-```
-```
-
-
-- skill hook
-- matcher
-
-
-- [Scott Spence: Claude Code Skill Auto Activation](https://scottspence.com/posts/claude-code-skill-auto-activation)
-- [Scott Spence: Claude Code Skill Auto Activation Follow Up](https://scottspence.com/posts/claude-code-skill-auto-activation-follow-up)
-- [Claude Code Hooks Documentation](https://docs.anthropic.com/claude-code/hooks)
+Do not turn the hook script into a second copy of the entire documentation set. That duplication is what causes drift.
